@@ -5,24 +5,38 @@ import (
 	"log"
 
 	"github.com/jetoneza/mdb-bg-schema-updater/pkg/bigquery"
+	"github.com/jetoneza/mdb-bg-schema-updater/pkg/mongodb"
 )
 
 func main() {
-    // TODO: Get schema from MongoDB
-    // TODO: Create bigquery schema
-
-	log.Println("Updating Schema...")
-	updateBigquerySchema()
-}
-
-func updateBigquerySchema() {
 	ctx := context.Background()
 
-	creds := bigquery.InitializeCredentials(ctx, "")
+	log.Println("Getting Schema from MongoDB...")
+	mdbClient := mongodb.New(ctx)
+	defer mdbClient.Close()
 
-	writer := bigquery.NewStreamWriter(ctx, creds)
+	schema, err := mdbClient.GetSchemaFromMongoDB(ctx)
+	if err != nil {
+		log.Printf("Error fetching schema from MongoDB: %v\n", err)
+		return
+	}
 
-	err := writer.UpdateSchema()
+	if schema == nil {
+		log.Println("No documents found in MongoDB collection")
+		return
+	}
+
+	log.Println("Updating Schema...")
+	updateBigquerySchema(ctx, schema)
+}
+
+func updateBigquerySchema(ctx context.Context, schema map[string]interface{}) {
+	// creds := bigquery.InitializeCredentials(ctx, "")
+
+	writer := bigquery.NewStreamWriter(ctx, nil)
+	defer writer.Close()
+
+	err := writer.UpdateSchema(schema)
 	if err != nil {
 		panic(err)
 	}
