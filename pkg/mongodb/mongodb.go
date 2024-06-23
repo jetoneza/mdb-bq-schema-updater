@@ -29,7 +29,7 @@ func New(ctx context.Context) *MongoDB {
 		panic(err)
 	}
 
-	log.Println("Pinged your deployment. You successfully connected to MongoDB!")
+	log.Println("Successfully connected to MongoDB.")
 
 	return &MongoDB{
 		Client:  client,
@@ -48,6 +48,7 @@ func (m *MongoDB) GetSchemaFromMongoDB(ctx context.Context) (map[string]interfac
 	coll := m.Client.Database(config.MONGO_DB_NAME).Collection(config.MONGO_DB_COLLECTION)
 
 	var result map[string]interface{}
+
 	err := coll.FindOne(ctx, bson.D{}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
